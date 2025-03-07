@@ -1,6 +1,6 @@
 
 import React, { forwardRef, useEffect, useState } from "react";
-import { Code, ExternalLink, Terminal } from "lucide-react";
+import { Code, ExternalLink, Terminal, RefreshCw } from "lucide-react";
 
 interface PreviewPanelProps {
   initialContent: string;
@@ -87,6 +87,16 @@ const PreviewPanel = forwardRef<HTMLIFrameElement, PreviewPanelProps>(
       setConsoleLogs([]);
     };
 
+    const refreshPreview = () => {
+      const iframe = ref as React.RefObject<HTMLIFrameElement>;
+      if (iframe.current) {
+        const iframeDoc = iframe.current.contentDocument || iframe.current.contentWindow?.document;
+        if (iframeDoc) {
+          iframeDoc.location.reload();
+        }
+      }
+    };
+
     return (
       <div className="h-full flex flex-col">
         <div className="p-3 border-b bg-gray-50 flex justify-between items-center">
@@ -120,12 +130,22 @@ const PreviewPanel = forwardRef<HTMLIFrameElement, PreviewPanelProps>(
             </button>
           </div>
           
-          <button 
-            onClick={() => window.open("", "_blank")?.document.write(initialContent)}
-            className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded"
-          >
-            Open in New Tab
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={refreshPreview}
+              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center"
+            >
+              <RefreshCw size={14} className="mr-1" />
+              Refresh
+            </button>
+            <button 
+              onClick={() => window.open("", "_blank")?.document.write(initialContent)}
+              className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center"
+            >
+              <ExternalLink size={14} className="mr-1" />
+              Open in New Tab
+            </button>
+          </div>
         </div>
         
         <div className="flex-1 overflow-hidden">

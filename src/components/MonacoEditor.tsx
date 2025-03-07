@@ -39,7 +39,7 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
     editor.focus();
     
     // Add keyboard shortcuts
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+    editor.addCommand(_monaco.KeyMod.CtrlCmd | _monaco.KeyCode.KeyS, () => {
       // Save functionality can be implemented here
       console.log("Save command triggered");
     });

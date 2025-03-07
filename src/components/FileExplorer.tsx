@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Plus, Folder, File, X } from "lucide-react";
+import { Plus, Folder, File, ChevronRight, ChevronDown, X, Edit, Save, Trash } from "lucide-react";
 
 export interface FileItem {
   id: string;
@@ -9,6 +9,7 @@ export interface FileItem {
   language?: string;
   type: "file" | "folder";
   children?: FileItem[];
+  parentId?: string;
 }
 
 interface FileExplorerProps {
@@ -29,39 +30,159 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
   const [newItemName, setNewItemName] = useState("");
   const [isCreatingFile, setIsCreatingFile] = useState(false);
   const [newItemType, setNewItemType] = useState<"file" | "folder">("file");
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [parentForNewItem, setParentForNewItem] = useState<string | undefined>(undefined);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
 
   const handleCreateNewItem = () => {
     if (newItemName.trim()) {
-      onFileCreate(newItemName, newItemType);
+      onFileCreate(newItemName, newItemType, parentForNewItem);
       setNewItemName("");
       setIsCreatingFile(false);
+      setParentForNewItem(undefined);
     }
   };
 
-  const renderFileItem = (file: FileItem) => {
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => 
+      prev.includes(folderId)
+        ? prev.filter(id => id !== folderId)
+        : [...prev, folderId]
+    );
+  };
+
+  const startRenaming = (file: FileItem) => {
+    setRenamingId(file.id);
+    setNewName(file.name);
+  };
+
+  const confirmRename = () => {
+    // In a real app, we would update the file name here
+    // For now, we'll just end the renaming state
+    setRenamingId(null);
+  };
+
+  const getFileIcon = (fileName: string) => {
+    if (fileName.endsWith('.html')) return <File size={16} className="text-orange-500" />;
+    if (fileName.endsWith('.css')) return <File size={16} className="text-blue-500" />;
+    if (fileName.endsWith('.js')) return <File size={16} className="text-yellow-500" />;
+    if (fileName.endsWith('.jsx')) return <File size={16} className="text-yellow-500" />;
+    if (fileName.endsWith('.ts')) return <File size={16} className="text-blue-700" />;
+    if (fileName.endsWith('.tsx')) return <File size={16} className="text-blue-700" />;
+    if (fileName.endsWith('.json')) return <File size={16} className="text-gray-500" />;
+    if (fileName.endsWith('.md')) return <File size={16} className="text-gray-700" />;
+    return <File size={16} />;
+  };
+
+  const renderFileItem = (file: FileItem, depth = 0) => {
     const isSelected = selectedFileId === file.id;
+    const isFolder = file.type === "folder";
+    const isExpanded = expandedFolders.includes(file.id);
+    const isRenaming = renamingId === file.id;
     
     return (
-      <div 
-        key={file.id} 
-        className={`flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer ${
-          isSelected ? "bg-blue-100" : ""
-        }`}
-      >
+      <div key={file.id}>
         <div 
-          className="flex items-center gap-2 flex-1" 
-          onClick={() => file.type === "file" && onFileSelect(file)}
+          className={`flex items-center justify-between py-1 px-2 hover:bg-gray-100 rounded cursor-pointer ${
+            isSelected ? "bg-blue-100" : ""
+          }`}
+          style={{ paddingLeft: `${(depth * 12) + 8}px` }}
         >
-          {file.type === "folder" ? <Folder size={16} /> : <File size={16} />}
-          <span>{file.name}</span>
+          <div 
+            className="flex items-center gap-1 flex-1" 
+            onClick={() => isFolder ? toggleFolder(file.id) : onFileSelect(file)}
+          >
+            {isFolder && (
+              <button onClick={(e) => { e.stopPropagation(); toggleFolder(file.id); }} className="p-0.5">
+                {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+            )}
+            
+            {isFolder ? <Folder size={16} className="text-blue-400" /> : getFileIcon(file.name)}
+            
+            {isRenaming ? (
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="text-xs p-0.5 border rounded flex-1"
+                autoFocus
+                onKeyPress={(e) => e.key === 'Enter' && confirmRename()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <span className="text-sm">{file.name}</span>
+            )}
+          </div>
+          
+          <div className="flex space-x-1">
+            {isRenaming ? (
+              <button 
+                className="text-green-500 hover:text-green-700 p-1"
+                onClick={confirmRename}
+              >
+                <Save size={12} />
+              </button>
+            ) : (
+              <>
+                <button 
+                  className="text-gray-400 hover:text-blue-500 p-1"
+                  onClick={(e) => { e.stopPropagation(); startRenaming(file); }}
+                >
+                  <Edit size={12} />
+                </button>
+                <button 
+                  className="text-gray-400 hover:text-red-500 p-1"
+                  onClick={(e) => { e.stopPropagation(); onFileDelete(file.id); }}
+                >
+                  <Trash size={12} />
+                </button>
+              </>
+            )}
+          </div>
         </div>
-        <button 
-          className="text-gray-500 hover:text-red-500 p-1"
-          onClick={() => onFileDelete(file.id)}
-        >
-          <X size={14} />
-        </button>
+        
+        {isFolder && isExpanded && file.children && (
+          <div>
+            {file.children.map(child => renderFileItem(child, depth + 1))}
+            {file.children.length === 0 && (
+              <div 
+                className="text-xs text-gray-400 italic py-1 px-2"
+                style={{ paddingLeft: `${((depth + 1) * 12) + 8}px` }}
+              >
+                Empty folder
+              </div>
+            )}
+          </div>
+        )}
       </div>
+    );
+  };
+
+  const renderFolderSelect = () => {
+    const renderOption = (file: FileItem, depth = 0) => {
+      if (file.type !== "folder") return null;
+      
+      return (
+        <React.Fragment key={file.id}>
+          <option value={file.id} style={{ marginLeft: `${depth * 10}px` }}>
+            {'\u00A0'.repeat(depth * 2)}{depth > 0 ? '└─ ' : ''}{file.name}
+          </option>
+          {file.children?.map(child => renderOption(child, depth + 1))}
+        </React.Fragment>
+      );
+    };
+    
+    return (
+      <select 
+        value={parentForNewItem || ""}
+        onChange={(e) => setParentForNewItem(e.target.value || undefined)}
+        className="text-xs p-1 border rounded mb-2 w-full"
+      >
+        <option value="">Root directory</option>
+        {files.map(file => renderOption(file))}
+      </select>
     );
   };
 
@@ -79,11 +200,18 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
       </div>
       
       <div className="flex-1 overflow-y-auto p-2">
-        {files.map(renderFileItem)}
+        {files.map(file => renderFileItem(file))}
+        {files.length === 0 && (
+          <div className="text-gray-500 text-sm italic p-2">
+            No files yet. Create your first file!
+          </div>
+        )}
       </div>
       
       {isCreatingFile && (
         <div className="p-3 border-t">
+          <h4 className="text-xs font-medium mb-2">Create new item</h4>
+          {renderFolderSelect()}
           <div className="flex gap-2 mb-2">
             <select 
               value={newItemType}
@@ -97,7 +225,7 @@ const FileExplorer: React.FC<FileExplorerProps> = ({
               type="text"
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
-              placeholder="filename.js"
+              placeholder={newItemType === "file" ? "filename.js" : "folder name"}
               className="text-xs p-1 border rounded flex-1"
               autoFocus
             />

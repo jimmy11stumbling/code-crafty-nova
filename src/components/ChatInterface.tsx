@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, CornerUpRight } from "lucide-react";
+import { Send, CornerUpRight, Code, Lightbulb, ExternalLink } from "lucide-react";
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => Promise<string>;
@@ -22,7 +22,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     "Create a responsive navbar",
     "Add a contact form",
     "Create an image gallery",
-    "Add a login form"
+    "Add a login form",
+    "Create a dark mode toggle",
+    "Add a product card component",
+    "Create a footer with social links"
   ]
 }) => {
   const [messages, setMessages] = useState<Message[]>([
@@ -35,10 +38,39 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   ]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [quickSuggestions, setQuickSuggestions] = useState<string[]>([]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Generate context-aware quick suggestions based on conversation
+  useEffect(() => {
+    if (messages.length > 1) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.sender === "assistant") {
+        const contextSuggestions: string[] = [];
+        
+        // Add contextual follow-up suggestions based on previous messages
+        if (lastMessage.content.includes("navbar")) {
+          contextSuggestions.push("Make the navbar sticky");
+          contextSuggestions.push("Add a dropdown menu to the navbar");
+        } else if (lastMessage.content.includes("form")) {
+          contextSuggestions.push("Add form validation");
+          contextSuggestions.push("Make the form responsive");
+        } else if (lastMessage.content.includes("button")) {
+          contextSuggestions.push("Add a hover effect to the button");
+          contextSuggestions.push("Make the button animate when clicked");
+        }
+        
+        // Add generic follow-ups
+        contextSuggestions.push("Can you explain how this works?");
+        contextSuggestions.push("Improve the styling");
+        
+        setQuickSuggestions(contextSuggestions.slice(0, 3));
+      }
+    }
   }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,8 +121,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className="h-80 border-t flex flex-col">
-      <div className="p-3 border-b bg-gray-50">
+      <div className="p-3 border-b bg-gray-50 flex justify-between items-center">
         <h3 className="font-medium text-sm">AI Assistant</h3>
+        <div className="flex items-center text-xs text-gray-500">
+          <Code size={14} className="mr-1" />
+          <span>Powered by AI</span>
+        </div>
       </div>
       
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
@@ -125,7 +161,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div ref={messagesEndRef} />
       </div>
       
-      {/* Suggestions */}
+      {/* Context-aware suggestions */}
+      {quickSuggestions.length > 0 && (
+        <div className="p-2 border-t bg-blue-50 flex gap-2 overflow-x-auto">
+          <Lightbulb size={14} className="text-blue-500 mt-1" />
+          {quickSuggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => handleSuggestionClick(suggestion)}
+              className="text-xs whitespace-nowrap px-2 py-1 bg-blue-100 text-blue-700 border border-blue-200 rounded-full hover:bg-blue-200 flex items-center"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
+      
+      {/* Predefined suggestions */}
       <div className="p-2 border-t bg-gray-50 flex gap-2 overflow-x-auto">
         {suggestions.map((suggestion, index) => (
           <button
@@ -139,7 +191,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ))}
       </div>
       
-      <form onSubmit={handleSubmit} className="p-3 border-t flex">
+      {/* Link to documentation */}
+      <div className="px-2 py-1 border-t border-b bg-gray-50 flex justify-center">
+        <a href="https://docs.example.com" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:text-blue-700 flex items-center">
+          <ExternalLink size={12} className="mr-1" />
+          Learn more about what you can build
+        </a>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="p-3 flex">
         <input
           type="text"
           value={input}
