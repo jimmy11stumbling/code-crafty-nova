@@ -1,5 +1,7 @@
 
-import React, { useRef, useEffect } from "react";
+import React from "react";
+import MonacoEditor from "./MonacoEditor";
+import { Copy } from "lucide-react";
 
 interface CodePanelProps {
   code: string;
@@ -7,21 +9,6 @@ interface CodePanelProps {
 }
 
 const CodePanel: React.FC<CodePanelProps> = ({ code, onChange }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Auto-resize the textarea based on content
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, [code]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(e.target.value);
-  };
-
   return (
     <div className="flex-1 p-4 overflow-hidden flex flex-col">
       <div className="flex justify-between items-center mb-2">
@@ -29,20 +16,15 @@ const CodePanel: React.FC<CodePanelProps> = ({ code, onChange }) => {
         <div className="flex space-x-2">
           <button
             onClick={() => navigator.clipboard.writeText(code)}
-            className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded"
+            className="flex items-center gap-1 text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded"
           >
-            Copy
+            <Copy size={14} />
+            <span>Copy</span>
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-auto border rounded-md bg-gray-50">
-        <textarea
-          ref={textareaRef}
-          value={code}
-          onChange={handleChange}
-          className="w-full h-full p-3 font-mono text-sm resize-none focus:outline-none"
-          spellCheck="false"
-        />
+      <div className="flex-1 overflow-hidden">
+        <MonacoEditor code={code} onChange={onChange} />
       </div>
     </div>
   );

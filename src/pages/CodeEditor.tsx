@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from "react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import Layout from "@/components/Layout";
 import CodePanel from "@/components/CodePanel";
 import ChatInterface from "@/components/ChatInterface";

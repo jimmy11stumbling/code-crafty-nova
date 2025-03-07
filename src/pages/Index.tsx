@@ -22,12 +22,20 @@ const Index: React.FC = () => {
     <Layout>
       <Hero />
       <div className="text-center py-8">
-        <Link 
-          to="/editor" 
-          className="inline-block px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
-        >
-          Try Our AI Code Editor
-        </Link>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
+          <Link 
+            to="/editor" 
+            className="inline-block px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+          >
+            Try Our AI Code Editor
+          </Link>
+          <Link 
+            to="/projects" 
+            className="inline-block px-6 py-3 rounded-lg bg-gray-100 text-gray-800 font-medium hover:bg-gray-200 transition-colors"
+          >
+            View My Projects
+          </Link>
+        </div>
       </div>
       <Features />
       <Product />
