@@ -1,23 +1,36 @@
 
 import React, { useState, useRef, useEffect } from "react";
+import { Send, CornerUpRight } from "lucide-react";
 
 interface ChatInterfaceProps {
   onSendMessage: (message: string) => Promise<string>;
   isProcessing: boolean;
+  suggestions?: string[];
 }
 
 interface Message {
   id: string;
   content: string;
   sender: "user" | "assistant";
+  timestamp: Date;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessing }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
+  onSendMessage, 
+  isProcessing,
+  suggestions = [
+    "Create a responsive navbar",
+    "Add a contact form",
+    "Create an image gallery",
+    "Add a login form"
+  ]
+}) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       content: "Hi! I'm your AI coding assistant. How can I help you today?",
-      sender: "assistant"
+      sender: "assistant",
+      timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState("");
@@ -36,7 +49,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessi
     const userMessage: Message = {
       id: Date.now().toString(),
       content: input,
-      sender: "user"
+      sender: "user",
+      timestamp: new Date()
     };
     
     setMessages(prev => [...prev, userMessage]);
@@ -48,7 +62,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessi
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response,
-        sender: "assistant"
+        sender: "assistant",
+        timestamp: new Date()
       };
       
       setMessages(prev => [...prev, assistantMessage]);
@@ -56,11 +71,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessi
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "Sorry, there was an error processing your request.",
-        sender: "assistant"
+        sender: "assistant",
+        timestamp: new Date()
       };
       
       setMessages(prev => [...prev, errorMessage]);
     }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -79,7 +103,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessi
                 : "bg-gray-100 text-gray-800"
             }`}
           >
-            {message.content}
+            <div className="flex flex-col">
+              <div className="pb-1">
+                {message.content}
+              </div>
+              <div className="text-right text-xs text-gray-500">
+                {formatTime(message.timestamp)}
+              </div>
+            </div>
           </div>
         ))}
         {isProcessing && (
@@ -94,6 +125,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessi
         <div ref={messagesEndRef} />
       </div>
       
+      {/* Suggestions */}
+      <div className="p-2 border-t bg-gray-50 flex gap-2 overflow-x-auto">
+        {suggestions.map((suggestion, index) => (
+          <button
+            key={index}
+            onClick={() => handleSuggestionClick(suggestion)}
+            className="text-xs whitespace-nowrap px-2 py-1 bg-white border rounded-full hover:bg-gray-100 flex items-center"
+          >
+            <CornerUpRight size={12} className="mr-1" />
+            {suggestion}
+          </button>
+        ))}
+      </div>
+      
       <form onSubmit={handleSubmit} className="p-3 border-t flex">
         <input
           type="text"
@@ -105,14 +150,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, isProcessi
         />
         <button
           type="submit"
-          className={`px-4 py-2 rounded-r-md ${
+          className={`px-4 py-2 rounded-r-md flex items-center justify-center ${
             isProcessing
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700"
           } text-white`}
           disabled={isProcessing}
         >
-          Send
+          <Send size={16} />
         </button>
       </form>
     </div>
